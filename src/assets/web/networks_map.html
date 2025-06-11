@@ -21,6 +21,11 @@
   <script type="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
 </head>
 <body>
+  <div class="zoom-controls">
+    <button onclick="zoomIn()">+</button>
+    <button onclick="zoomOut()">−</button>
+    <button onclick="resetZoom()">Reset</button>
+  </div>
   <div id="network"></div>
 
   <script>
@@ -89,6 +94,8 @@
         hover: true,
         tooltipDelay: 50,
         dragNodes: true,
+        dragView: true,
+        zoomView: true
       },
     };
 
@@ -104,6 +111,27 @@
         }
       });
     });
+
+    function zoomIn() {
+      currentScale = Math.min(currentScale + 0.1, 2);
+      network.moveTo({ scale: currentScale });
+    }
+
+    function zoomOut() {
+      currentScale = Math.max(currentScale - 0.1, 0.1);
+      network.moveTo({ scale: currentScale });
+    }
+
+    function resetZoom() {
+      currentScale = 0.5;
+      network.fit({
+        scale: currentScale,
+        animation: {
+          duration: 500,
+          easingFunction: "easeInOutQuad"
+        }
+      });
+    }
   </script>
 </body>
 </html>
