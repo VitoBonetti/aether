@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Network Stats Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+  body {
+      margin: 0;
+      padding: 20px;
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #f9f9f9;
+      color: #333;
+      text-align: center;
+  }
+
+  h1 {
+      margin-bottom: 30px;
+  }
+
+  h2 {
+      margin-bottom: 10px;
+      text-align: center;
+  }
+
+  .chart-section {
+      margin-bottom: 40px;
+      display: flex;
+      justify-content: center; /* Centers the content (the chart container) */
+      align-items: center;
+      /* We'll set the width on the .chart-container or .charts-row directly */
+  }
+
+  .chart-container {
+      background-color: white;
+      padding: 15px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.06);
+      min-width: 300px; /* Ensures a minimum size for all chart containers */
+      box-sizing: border-box; /* Include padding in the width calculation */
+  }
+
+  /* Define a consistent target width for the layout (two 600px charts + 20px gap) */
+  /* This variable makes it easier to manage the target width */
+  :root {
+    --chart-layout-width: calc(600px * 2 + 20px); /* 1220px */
+  }
+
+  /* Style for the single bar chart container */
+  .chart-section:first-of-type .chart-container {
+      width: var(--chart-layout-width); /* Make it exactly the target width */
+      max-width: calc(100% - 40px); /* Account for body padding */
+  }
+
+  .charts-row {
+      display: flex;
+      justify-content: center; /* Centers the two pie chart containers within this row */
+      gap: 20px; /* Space between the two pie charts */
+      flex-wrap: wrap; /* Allows items to wrap onto the next line if space is limited */
+
+      /* Make the charts-row itself have the same target width */
+      width: var(--chart-layout-width);
+      max-width: calc(100% - 40px); /* Account for body padding */
+
+      margin-left: auto;
+      margin-right: auto;
+  }
+
+  .charts-row .chart-container {
+      /* Each pie chart should take roughly half the width of the row, minus half the gap */
+      flex-basis: calc(50% - 10px); /* 50% of parent width, minus 10px for half the gap */
+      flex-grow: 1; /* Allow them to grow if there's extra space in the row */
+      flex-shrink: 1; /* Allow them to shrink if space is limited */
+      max-width: calc(100% - 10px); /* Prevents individual chart from being wider than its calculated half if the row gets really narrow */
+  }
+
+  canvas {
+      width: 100% !important;
+  }
+
+  /* Media query for when the combined width is too much */
+  /* This breakpoint should be slightly larger than the --chart-layout-width + body padding */
+  @media (max-width: calc(var(--chart-layout-width) + 40px)) {
+      .chart-section:first-of-type .chart-container,
+      .charts-row {
+          width: 100%; /* Allow full width (minus padding) on smaller screens */
+          max-width: 100%; /* Ensure it doesn't exceed 100% of its parent */
+      }
+
+      .charts-row .chart-container {
+          /* On smaller screens, they will still try to be 50% each */
+          flex-basis: calc(50% - 10px);
+      }
+  }
+
+  /* Media query for even smaller screens, where charts might stack */
+  @media (max-width: 768px) {
+      .charts-row {
+          flex-direction: column; /* Stack charts vertically on very small screens */
+          align-items: center; /* Center them when stacked */
+      }
+
+      .charts-row .chart-container {
+          width: 100%; /* Each chart takes full width when stacked */
+          flex-basis: auto; /* Reset flex-basis when stacked */
+      }
+  }
+</style>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+  <h1>Network Statistics Overview</h1>
+
+  <div class="chart-section">
+    <div class="chart-container">
+      <div style="align-items: center"><h2>📶 Channel Distribution</h2></div>
+      <canvas id="channelChart"></canvas>
+    </div>
+  </div>
+
+  <div class="chart-section charts-row">
+    <div class="chart-container">
+      <h2>🔐 Encryption Distribution</h2>
+      <canvas id="encryptionChart"></canvas>
+    </div>
+    <div class="chart-container">
+      <h2>📶 Band Distribution</h2>
+      <canvas id="bandChart"></canvas>
+    </div>
+  </div>
+
+  <script>
+    // 🔽 Replace this with updated network_stats.json values
+    const networkStats = __REPLACE_WITH_JSON__;
+
+    // Channel Distribution Chart (Bar)
+    const channelCtx = document.getElementById("channelChart").getContext("2d");
+    new Chart(channelCtx, {
+      type: "bar",
+      data: {
+        labels: Object.keys(networkStats.channel_count),
+        datasets: [{
+          label: "AP Count",
+          data: Object.values(networkStats.channel_count),
+          backgroundColor: "rgba(54, 162, 235, 0.6)",
+          borderColor: "rgba(54, 162, 235, 1)",
+          borderWidth: 1,
+          borderRadius: 4
+        }]
+      },
+      options: {
+        responsive: true,
+        scales: {
+          y: { beginAtZero: true },
+          x: { title: { display: true, text: "Channel" } }
+        },
+        plugins: {
+          legend: { display: false }
+        }
+      }
+    });
+
+    // Encryption Distribution (Pie)
+    const encCtx = document.getElementById("encryptionChart").getContext("2d");
+    new Chart(encCtx, {
+      type: "pie",
+      data: {
+        labels: Object.keys(networkStats.encryption_count),
+        datasets: [{
+          label: "Encryption Types",
+          data: Object.values(networkStats.encryption_count),
+          backgroundColor: [
+            "#4CAF50", "#FF9800", "#2196F3", "#9C27B0", "#FF5722", "#607D8B"
+          ]
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: {
+            display: true,
+            position: 'bottom'
+          }
+        },
+      }
+    });
+
+    // Band Distribution (Pie)
+    const bandCtx = document.getElementById("bandChart").getContext("2d");
+    new Chart(bandCtx, {
+      type: "pie",
+      data: {
+        labels: Object.keys(networkStats.band_count).map(b => `${b} GHz`),
+        datasets: [{
+          label: "Band",
+          data: Object.values(networkStats.band_count),
+          backgroundColor: ["#3F51B5", "#00BCD4"]
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: {
+            display: true,
+            position: 'bottom'
+          }
+        },
+      }
+    });
+  </script>
+</body>
+</html>

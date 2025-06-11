@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>SSID Network Graph</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: "Segoe UI", sans-serif;
+      background-color: #f0f0f0;
+    }
+
+    #network {
+      width: 100vw;
+      height: 100vh;
+      background-color: #ffffff;
+    }
+  </style>
+  <script type="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+</head>
+<body>
+  <div id="network"></div>
+
+  <script>
+    const graphData = __REPLACE_WITH_JSON__;
+
+    const nodes = [];
+    const edges = [];
+    let nodeId = 1;
+
+    const nodeMap = new Map(); // MAC/SSID to numeric ID
+
+    // Assign unique ID and type-based style
+    function addNode(label, group) {
+      const id = nodeId++;
+      nodes.push({ id, label, group });
+      nodeMap.set(label, id);
+      return id;
+    }
+
+    // Build graph from data
+    for (const [ssid, ssidData] of Object.entries(graphData)) {
+      const ssidNodeId = addNode(ssid || "<hidden>", "ssid");
+
+      for (const apData of ssidData) {
+        const apMac = apData.bssid;
+        const apNodeId = addNode(apMac, "ap");
+        edges.push({ from: ssidNodeId, to: apNodeId });
+
+        for (const client of apData.clients || []) {
+          const clientMac = client.mac;
+          const clientNodeId = addNode(clientMac, "client");
+          edges.push({ from: apNodeId, to: clientNodeId });
+        }
+      }
+    }
+
+    const container = document.getElementById("network");
+    const data = {
+      nodes: new vis.DataSet(nodes),
+      edges: new vis.DataSet(edges),
+    };
+    const options = {
+      nodes: {
+        shape: "dot",
+        size: 10,
+        font: { size: 14 },
+      },
+      groups: {
+        ssid: { shape: "circle", color: { background: "#3F51B5" }, font: { color: "white" } },
+        ap: { shape: "box", color: { background: "#4CAF50" }, font: { color: "white" } },
+        client: { shape: "dot", color: { background: "#FF9800" } },
+      },
+      edges: {
+        arrows: { to: false },
+        color: { color: "#888" },
+        smooth: { type: "dynamic" },
+      },
+      physics: {
+        stabilization: false,
+        barnesHut: {
+          gravitationalConstant: -8000,
+          springLength: 150,
+        },
+      },
+      interaction: {
+        hover: true,
+        tooltipDelay: 50,
+        dragNodes: true,
+      },
+    };
+
+    const network = new vis.Network(container, data, options);
+
+    // Zoom out to fit entire graph comfortably
+    network.once("stabilizationIterationsDone", function () {
+      network.moveTo({
+        scale: 0.5,
+        animation: {
+          duration: 500,
+          easingFunction: "easeInOutQuad"
+        }
+      });
+    });
+  </script>
+</body>
+</html>
