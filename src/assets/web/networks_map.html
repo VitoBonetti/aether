@@ -17,6 +17,43 @@
       height: 100vh;
       background-color: #ffffff;
     }
+
+    .zoom-controls {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      z-index: 10;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .zoom-controls button,
+    .export-controls button {
+      padding: 8px 12px;
+      font-size: 16px;
+      font-weight: bold;
+      background-color: #3f51b5;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    .zoom-controls button:hover,
+    .export-controls button:hover {
+      background-color: #303f9f;
+    }
+
+    .export-controls {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      z-index: 10;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
   </style>
   <script type="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
 </head>
@@ -26,7 +63,17 @@
     <button onclick="zoomOut()">−</button>
     <button onclick="resetZoom()">Reset</button>
   </div>
+
+  <div class="export-controls">
+    <button onclick="exportPNG()">Export PNG</button>
+    <button onclick="exportPDF()">Export PDF</button>
+  </div>
+
   <div id="network"></div>
+  <canvas id="hiddenCanvas" style="display: none;"></canvas>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
   <script>
     const graphData = __REPLACE_WITH_JSON__;
@@ -35,9 +82,8 @@
     const edges = [];
     let nodeId = 1;
 
-    const nodeMap = new Map(); // MAC/SSID to numeric ID
+    const nodeMap = new Map();
 
-    // Assign unique ID and type-based style
     function addNode(label, group) {
       const id = nodeId++;
       nodes.push({ id, label, group });
@@ -45,7 +91,6 @@
       return id;
     }
 
-    // Build graph from data
     for (const [ssid, ssidData] of Object.entries(graphData)) {
       const ssidNodeId = addNode(ssid || "<hidden>", "ssid");
 
@@ -96,15 +141,15 @@
         dragNodes: true,
         dragView: true,
         zoomView: true
-      },
+      }
     };
 
     const network = new vis.Network(container, data, options);
+    let currentScale = 0.5;
 
-    // Zoom out to fit entire graph comfortably
     network.once("stabilizationIterationsDone", function () {
       network.moveTo({
-        scale: 0.5,
+        scale: currentScale,
         animation: {
           duration: 500,
           easingFunction: "easeInOutQuad"
@@ -131,6 +176,31 @@
           easingFunction: "easeInOutQuad"
         }
       });
+    }
+
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "+") zoomIn();
+      if (e.key === "-") zoomOut();
+      if (e.key === "0") resetZoom();
+    });
+
+    function exportPNG() {
+      html2canvas(container).then(canvas => {
+        const link = document.createElement('a');
+        link.download = 'networks_map.png';
+        link.href = canvas.toDataURL();
+        link.click();
+      });
+    }
+
+    async function exportPDF() {
+      const canvas = await html2canvas(container);
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jspdf.jsPDF({ orientation: 'landscape' });
+      const width = pdf.internal.pageSize.getWidth();
+      const height = pdf.internal.pageSize.getHeight();
+      pdf.addImage(imgData, 'PNG', 0, 0, width, height);
+      pdf.save("networks_map.pdf");
     }
   </script>
 </body>
