@@ -21,7 +21,9 @@ class Template:
         state.info_progress = self.info_progress
 
     def render(self):
-        if threading.Thread(target=check_for_update, daemon=True).start():
+        thread = threading.Thread(target=check_for_update, daemon=True).start()
+        print(thread)
+        if thread:
             self.check_update_icon.name = ft.Icons.NOTIFICATIONS_OUTLINED
             self.check_update_icon.tooltip = "Update Available"
             self.check_update_icon.color = ft.Colors.ORANGE
