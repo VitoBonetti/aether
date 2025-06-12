@@ -3,6 +3,7 @@ from pathlib import Path
 
 
 def network_stats(output_path):
+    print("[*] Phase 4: Creating network statistics...")
     input_path = Path(f'{output_path}/merged_networks.json')
     with open(input_path) as json_file:
         network = json.load(json_file)
@@ -11,8 +12,10 @@ def network_stats(output_path):
     encryption_count = {}
     band_count = {}
     total_ssid = len(network)
+    print(f"[+] SSID count: {total_ssid}")
     total_aps = sum(len(aps) for aps in network.values())
-
+    print(f"[+] Access Point count: {total_aps}")
+    print("[*] Getting channel, encryption and band counts..")
     for aps in network.values():
         for ap in aps:
             channel = ap.get("channel")
@@ -33,3 +36,4 @@ def network_stats(output_path):
 
     with open(out_file, 'w') as f:
         json.dump(network_stats_json, f, indent=2)
+    print(f"[+] Network statistics saved to {out_file}")

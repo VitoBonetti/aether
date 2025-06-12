@@ -7,9 +7,15 @@ from datetime import datetime
 
 
 def extract_probes(packets: PacketList, output_dir: str):
-    print(f"Extracting probes")
     stations = {}
 
+    print("[*] Phase 5: Extracting probes...")
+    print(f"[*] Check if any packet is a Probe Request frame")
+    print(f"[*] Extract SSID (may be empty if it's a broadcast probe)")
+    print(f"[*] Try to extract signal strength (RSSI) if available")
+    print(f"[*] Get the MAC address and try to resolve the vendor name ")
+    print(f"[*] Store the most recent probe request per SSID ")
+    print(f"[*] Working on it...")
     for pkt in packets:
         if pkt.haslayer(Dot11ProbeReq):
             ts = datetime.fromtimestamp(float(pkt.time)).strftime('%Y-%m-%d %H:%M:%S')
@@ -30,6 +36,7 @@ def extract_probes(packets: PacketList, output_dir: str):
                 stations[station]['probes'][ssid] = {'timestamp': ts, 'ssid': ssid, 'signal': signal}
 
     # Build final list
+    print("[*] Prepare final output list")
     output = []
     for station, info in stations.items():
         probes_list = list(info['probes'].values())
@@ -40,4 +47,4 @@ def extract_probes(packets: PacketList, output_dir: str):
     out_path = Path(f"{output_dir}/probe_requests.json")
     with open(out_path, 'w') as f:
         json.dump(output, f, indent=2)
-    print(f"Wrote probe requests: {out_path}")
+    print(f"[+] Wrote probe requests: {out_path}")

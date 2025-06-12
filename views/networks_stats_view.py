@@ -48,9 +48,22 @@ class NetworkStats:
         self.page = state.page
         self.source_path = Path(f"{self.state.data_analysis_dir}/network_stats.json")
         self.map_source_path = Path(f"{self.state.data_analysis_dir}/extended_networks.json")
-
-        with open(self.source_path, "r") as f:
-            self.network_stats = json.load(f)
+        try:
+            with open(self.source_path, "r") as f:
+                self.network_stats = json.load(f)
+            self.has_data = True
+        except:
+            self.network_stats = {}
+            self.has_data = False
+            self.page.snack_bar.content = ft.Row(
+                controls=[
+                    ft.Icon(name=ft.Icons.WARNING_OUTLINED, color=ft.Colors.BLACK87, size=20),
+                    ft.Text("No data available", color=ft.Colors.BLACK87, size=20)
+                ]
+            )
+            self.page.snack_bar.bgcolor = ft.Colors.ORANGE_200
+            self.page.snack_bar.open = True
+            self.page.update()
 
     def _build_distribution_block(self, title, icon_name, color, data_dict):
         entries = []
@@ -107,6 +120,18 @@ class NetworkStats:
         )
 
     def render(self):
+        if not self.has_data:
+            try:
+                with open(self.source_path, "r", encoding="utf-8") as f:
+                    self.network_stats = json.load(f)
+                self.has_data = True
+                # once we have data, clear your "no data" snack
+                self.page.snack_bar.open = False
+                self.page.update()
+            except FileNotFoundError:
+                # still no data: render an empty placeholder
+                return ft.Container(expand=True)
+
         total_ssid = ft.Row(
             controls=[
                 ft.Icon(name=ft.Icons.WIFI, size=20, color=ft.Colors.BLUE),

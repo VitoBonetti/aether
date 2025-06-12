@@ -13,11 +13,8 @@ def resolve_mac(mac_address):
         if vendor:
             return f"{vendor}-{last_three_octets}"
         else:
-            print("vendor not found")
             return mac_address
     except KeyError as e:
-        print(f"vendor not found: keyerror {e}")
         return mac_address
     except Exception as e:
-        f"vendor not found: exception {e}"
         return mac_address

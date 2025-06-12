@@ -14,17 +14,18 @@ def extract_networks(packets: PacketList, out_path: str):
     1. merged_networks.json: SSIDs mapped to latest AP info.
     2. extended_networks.json: same, but each AP entry includes a list of connected clients with stats.
     """
-    ml = MacLookup()
-    # Update database
-    print("try to update")
-    try:
-        ml.update_vendors()
-        print("updating")
-    except:
-        print("updating skip")
-        pass
+    # ml = MacLookup()
+    # # Update database
+    # print("try to update")
+    # try:
+    #     ml.update_vendors()
+    #     print("updating")
+    # except:
+    #     print("updating skip")
+    #     pass
 
     # --- Phase 1: Collect beacons for AP info ---
+    print("[*] Phase 1: Collect beacons for AP info")
     networks = {}  # ssid -> bssid -> ap info
     for pkt in packets:
         if pkt.haslayer(Dot11Beacon):
@@ -74,7 +75,15 @@ def extract_networks(packets: PacketList, out_path: str):
                 networks[ssid][bssid] = entry
 
     # --- Phase 2: Discover clients by inspecting Data frames ---
-    clients_map = defaultdict(dict)  # bssid -> client_mac -> client info
+    print("[*] Phase 2: Discover clients by inspecting Data frames")
+    print("[*] Creating clients map")
+    print("[*] bssid -> client_mac -> client info")
+    print(f"[>] Identify AP BSSID in addr3 for packet")
+    print("[>] Determine client MAC")
+    print("[>] Resolve MAC address")
+    print("[>] Capture last seen & signal")
+    # bssid -> client_mac -> client info
+    clients_map = defaultdict(dict)
     for pkt in packets:
         if pkt.haslayer(Dot11) and pkt.type == 2:  # Data frame
             addr1 = pkt.addr1 and pkt.addr1.lower()
@@ -100,6 +109,7 @@ def extract_networks(packets: PacketList, out_path: str):
 
     # --- Phase 3: Write merged and extended JSON outputs ---
     # 1. merged_networks.json
+    print("[*] Phase 3: Write merged and extended JSON outputs")
     merged = {ssid: list(aps.values()) for ssid, aps in networks.items()}
     out1 = Path(out_path) / 'merged_networks.json'
     with open(out1, 'w') as f:
@@ -120,4 +130,4 @@ def extract_networks(packets: PacketList, out_path: str):
     with open(out2, 'w') as f:
         json.dump(extended, f, indent=2)
 
-    print(f"Wrote: {out1}\nWrote: {out2}")
+    print(f"[+] Wrote: {out1}\n[+] Wrote: {out2}")

@@ -5,6 +5,35 @@ from utils.extract_networks import extract_networks
 from utils.extract_probes import extract_probes
 from utils.extract_handshakes import extract_handshakes, group_handshakes
 from helpers.network_stats import network_stats
+import sys
+
+
+class StdoutToTextField:
+    def __init__(self, text_field: ft.TextField, page: ft.Page):
+        self.text_field = text_field
+        self.page = page
+        self._buffer = ""
+
+    def write(self, data: str):
+        # buffer up until newlines
+        self._buffer += data
+        if "\n" in self._buffer:
+            lines = self._buffer.split("\n")
+            # keep any partial line in buffer
+            self._buffer = lines.pop()
+            for line in lines:
+                # append and scroll
+                self.text_field.value += line + "\n"
+            self.text_field.update()
+            self.page.update()
+
+    def flush(self):
+        # flush any remaining text
+        if self._buffer:
+            self.text_field.value += self._buffer
+            self._buffer = ""
+            self.text_field.update()
+            self.page.update()
 
 
 class AetherView:
@@ -24,22 +53,32 @@ class AetherView:
         def on_file_picker_result(e: FilePickerResultEvent, page: ft.Page):
             if e.files:
                 self.state.info_progress.visible = True
-                paths = [file.path for file in e.files]
-                all_merged_pcap = load_and_merge_pcap(paths)
-                extract_networks(all_merged_pcap, self.state.data_analysis_dir)
-                network_stats(self.state.data_analysis_dir)
-                extract_probes(all_merged_pcap, self.state.data_analysis_dir)
-                handshakes = extract_handshakes(all_merged_pcap)
-                group_handshakes(handshakes, self.state.data_analysis_dir)
+
+                self.logs_text_field.value = ""
+                writer = StdoutToTextField(self.logs_text_field, page)
+                old_stdout = sys.stdout
+                sys.stdout = writer
+                try:
+                    paths = [file.path for file in e.files]
+                    all_merged_pcap = load_and_merge_pcap(paths)
+                    extract_networks(all_merged_pcap, self.state.data_analysis_dir)
+                    network_stats(self.state.data_analysis_dir)
+                    extract_probes(all_merged_pcap, self.state.data_analysis_dir)
+                    handshakes = extract_handshakes(all_merged_pcap)
+                    group_handshakes(handshakes, self.state.data_analysis_dir)
+                finally:
+                    # restore
+                    sys.stdout = old_stdout
+                    writer.flush()
 
                 self.state.info_progress.visible = False
                 self.page.snack_bar.content = ft.Row(
                     controls=[
-                        ft.Icon(name=ft.Icons.WARNING, color=ft.Colors.BLACK87, size=20),
-                        ft.Text("No data found in raw_data directory.", color=ft.Colors.BLACK87, size=20)
+                        ft.Icon(name=ft.Icons.TASK_ALT_OUTLINED, color=ft.Colors.BLACK87, size=20),
+                        ft.Text("Pcap uploaded successfully!", color=ft.Colors.BLACK87, size=20)
                     ]
                 )
-                self.page.snack_bar.bgcolor = ft.Colors.ORANGE_200
+                self.page.snack_bar.bgcolor = ft.Colors.GREEN_200
                 self.page.snack_bar.open = True
                 self.page.update()
 
@@ -48,8 +87,8 @@ class AetherView:
                 padding=ft.Padding(2, 2, 2, 2),
                 content=ft.Row(
                     controls=[
-                        ft.Icon(name=ft.Icons.UPLOAD_FILE, color=ft.Colors.BLACK38, size=20),
-                        ft.Text("Select PCAPs", size=20, color=ft.Colors.BLACK38)
+                        ft.Icon(name=ft.Icons.UPLOAD_FILE, color=ft.Colors.BLACK38, size=16),
+                        ft.Text("Select PCAPs", size=16, color=ft.Colors.BLACK38)
                     ],
                     alignment=ft.MainAxisAlignment.CENTER,
                     spacing=2
@@ -64,14 +103,30 @@ class AetherView:
             on_click=pick_files
         )
 
+        logs_text_field = ft.TextField(
+            multiline=True,
+            min_lines=25,
+            max_lines=25,
+            read_only=True,
+            border_radius=10,
+            border_color=ft.Colors.ORANGE_100,
+            border_width=2,
+            filled=True,
+            expand=True,
+            text_align=ft.TextAlign.START,
+            text_style=ft.TextStyle(size=10, font_family="Cascadia Code"),
+            bgcolor=ft.Colors.GREY_100
+        )
+
+        self.logs_text_field = logs_text_field
+
         view_content = ft.Container(
             expand=True,
             padding=5,
             content=ft.Column(
                 controls=[
-                    aether_title,
-                    ft.Divider(),
-                    ft.Row([pick_files_button])
+                    ft.Row([pick_files_button]),
+                    logs_text_field,
                 ],
                 expand=True
             )
