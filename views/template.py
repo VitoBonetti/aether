@@ -1,4 +1,6 @@
 import flet as ft
+import threading
+
 
 class Template:
     def __init__(self, page: ft.Page, state, content_view: ft.Control, selected_index: int):
@@ -17,7 +19,13 @@ class Template:
         )
         state.info_progress = self.info_progress
 
+        self._update_check_started = False
+
     def render(self):
+        if not self._update_check_started:
+            threading.Thread(target=self.state.aether_view.check_for_update, daemon=True).start()
+            self._update_check_started = True
+
         def on_nav_change(e):
             self.page.go(f"/{e.control.selected_index}")
 
