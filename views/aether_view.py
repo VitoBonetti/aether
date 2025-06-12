@@ -43,7 +43,6 @@ class AetherView:
         self.state = state
         self.page = state.page
 
-
         threading.Thread(target=self.check_for_update, daemon=True).start()
 
     def check_for_update(self):
