@@ -9,7 +9,7 @@ class Template:
         self.state = state
         self.content_view = content_view
         self.selected_index = selected_index
-        self.check_update_icon = ft.Icon(name=ft.Icons.VERIFIED_OUTLINED, tooltip="Up to date", color=ft.Colors.BLUE, size=20)
+        self.check_update_icon = ft.Icon(name=ft.Icons.VERIFIED_OUTLINED, tooltip="Up to date", color=ft.Colors.SURFACE, size=20)
         state.check_update_icon = self.check_update_icon
         self.info_progress = ft.ProgressRing(
             color=ft.Colors.ORANGE,
@@ -28,6 +28,8 @@ class Template:
             self.check_update_icon.tooltip = "Update Available"
             self.check_update_icon.color = ft.Colors.ORANGE
             self.check_update_icon.update()
+        else:
+            self.check_update_icon.color = ft.Colors.GREEN
 
         def on_nav_change(e):
             self.page.go(f"/{e.control.selected_index}")
