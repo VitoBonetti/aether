@@ -12,10 +12,10 @@ def check_for_update():
         ahead = sum(1 for _ in repo.iter_commits("HEAD..origin/master"))
         print(ahead)
         if ahead > 0:
-            return True
+            return ahead
         else:
             print("No updates detected!")
-            return False
+            return 0
     except Exception as e:
         print(e)
-        return False
+        return 0
