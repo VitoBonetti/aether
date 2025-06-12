@@ -23,7 +23,7 @@ class Template:
     def render(self):
         thread = threading.Thread(target=check_for_update, daemon=True).start()
         print(thread)
-        if thread > 0:
+        if thread and int(thread) > 0:
             self.check_update_icon.name = ft.Icons.NOTIFICATIONS_OUTLINED
             self.check_update_icon.tooltip = "Update Available"
             self.check_update_icon.color = ft.Colors.ORANGE
