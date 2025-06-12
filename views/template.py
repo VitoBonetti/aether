@@ -27,10 +27,12 @@ class Template:
             self.check_update_icon.name = ft.Icons.NOTIFICATIONS_OUTLINED
             self.check_update_icon.tooltip = "Update Available"
             self.check_update_icon.color = ft.Colors.ORANGE
+            self.check_update_icon.update()
+            self.page.update()
         else:
             self.check_update_icon.color = ft.Colors.BLUE
-        self.check_update_icon.update()
-        self.page.update()
+            self.check_update_icon.update()
+            self.page.update()
 
         def on_nav_change(e):
             self.page.go(f"/{e.control.selected_index}")
