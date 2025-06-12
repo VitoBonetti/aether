@@ -53,7 +53,7 @@ class AetherView:
 
             if ahead > 0:
                 dlg = ft.AlertDialog(
-                    title=ft.Text("🚀 Update available!"),
+                    title=ft.Text("Updates are available!"),
                     content=ft.Text(f"There are new commits upstream.\nRun `git pull` to grab them."),
                     actions=[ft.TextButton("OK", on_click=lambda e: self.close_update_dialog(e, dlg, self.page))]
                 )
