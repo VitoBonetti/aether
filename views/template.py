@@ -35,25 +35,8 @@ class Template:
             self.check_update_icon.color = ft.Colors.ORANGE
             self.check_update_icon.update()
 
-            dlg = ft.AlertDialog(
-                title=ft.Text("🔔 Update available!"),
-                content=ft.Text(
-                    f"There are {ahead} new commits upstream.\n"
-                    "Run `git pull` to update."
-                ),
-                actions=[
-                    ft.TextButton("OK", on_click=lambda e: self._close_dialog(dlg))
-                ],
-            )
-            self.page.dialog = dlg
-            dlg.open = True
-
             # finally push the update back to the UI
             self.page.update()
-
-    def _close_dialog(self, dlg: ft.AlertDialog):
-        dlg.open = False
-        self.page.update()
 
     def render(self):
         def on_nav_change(e):
