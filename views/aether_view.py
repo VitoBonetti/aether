@@ -43,6 +43,9 @@ class AetherView:
         self.state = state
         self.page = state.page
 
+
+        threading.Thread(target=self.check_for_update, daemon=True).start()
+
     def check_for_update(self):
         try:
             repo = git.Repo(search_parent_directories=True)
@@ -72,7 +75,6 @@ class AetherView:
         page.update()
 
     def render(self):
-        threading.Thread(target=self.check_for_update, daemon=True).start()
         aether_title = ft.Text("Home", theme_style=ft.TextThemeStyle.TITLE_LARGE, color=ft.Colors.BLACK87)
 
         file_picker = ft.FilePicker(on_result=lambda e: on_file_picker_result(e, self.page))
