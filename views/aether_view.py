@@ -2,6 +2,8 @@ import flet as ft
 from flet import FilePickerResultEvent
 from utils.load_and_merge_pcap import load_and_merge_pcap
 from utils.extract_networks import extract_networks
+from utils.extract_probes import extract_probes
+from utils.extract_handshakes import extract_handshakes, group_handshakes
 from helpers.network_stats import network_stats
 
 
@@ -26,6 +28,10 @@ class AetherView:
                 all_merged_pcap = load_and_merge_pcap(paths)
                 extract_networks(all_merged_pcap, self.state.data_analysis_dir)
                 network_stats(self.state.data_analysis_dir)
+                extract_probes(all_merged_pcap, self.state.data_analysis_dir)
+                handshakes = extract_handshakes(all_merged_pcap)
+                group_handshakes(handshakes, self.state.data_analysis_dir)
+
                 self.state.info_progress.visible = False
                 self.page.snack_bar.content = ft.Row(
                     controls=[

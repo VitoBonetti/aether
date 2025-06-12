@@ -169,3 +169,5 @@ pyproject.toml
 /data_analysis/extended_networks.json
 /data_analysis/merged_networks.json
 /data_analysis/network_stats.json
+/data_analysis/handshakes.json
+/data_analysis/probe_requests.json
