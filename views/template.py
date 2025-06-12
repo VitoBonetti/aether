@@ -9,9 +9,11 @@ class Template:
         self.state = state
         self.content_view = content_view
         self.selected_index = selected_index
-        self.check_update_icon = ft.Icon(name=ft.Icons.VERIFIED_OUTLINED, tooltip="Up to date", color=ft.Colors.SURFACE,
+
+        self.check_update_icon = ft.Icon(name=ft.Icons.VERIFIED_OUTLINED, tooltip="Up to date", color=ft.Colors.GREEN,
                                          size=20)
         state.check_update_icon = self.check_update_icon
+
         self.info_progress = ft.ProgressRing(
             color=ft.Colors.ORANGE,
             width=20,
@@ -21,16 +23,38 @@ class Template:
         )
         state.info_progress = self.info_progress
 
-    def render(self):
-        thread = threading.Thread(target=check_for_update, daemon=True).start()
-        print(thread)
-        if thread and int(thread) > 0:
-            self.check_update_icon.name = ft.Icons.NOTIFICATIONS_OUTLINED
-            self.check_update_icon.tooltip = "Update Available"
-            self.check_update_icon.color = ft.Colors.ORANGE
-            self.check_update_icon.update()
-            self.page.update()
+        threading.Thread(target=self._check_and_apply_update, daemon=True).start()
 
+    def _check_and_apply_update(self):
+        ahead = check_for_update()  # returns an int
+        if ahead > 0:
+            # schedule the UI update on the main Flet thread
+            self.page.call_from_thread(self._on_update_available, ahead)
+
+    def _on_update_available(self, ahead: int):
+        # change the icon
+        self.check_update_icon.name = ft.Icons.NOTIFICATIONS_OUTLINED
+        self.check_update_icon.tooltip = "Update Available"
+        self.check_update_icon.color = ft.Colors.ORANGE
+        self.check_update_icon.update()
+
+        # optionally pop a dialog
+        dlg = ft.AlertDialog(
+            title=ft.Text("🔔 Update available!"),
+            content=ft.Text(f"There are {ahead} new commits upstream.\nRun `git pull`."),
+            actions=[ft.TextButton("OK", on_click=lambda e: self._close_dialog(dlg))],
+        )
+        self.page.dialog = dlg
+        dlg.open = True
+
+        # finally refresh the page
+        self.page.update()
+
+    def _close_dialog(self, dlg):
+        dlg.open = False
+        self.page.update()
+
+    def render(self):
         def on_nav_change(e):
             self.page.go(f"/{e.control.selected_index}")
 
