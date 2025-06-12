@@ -1,5 +1,6 @@
 import flet as ft
 import threading
+from helpers.check_update import check_for_update
 
 
 class Template:
@@ -23,8 +24,12 @@ class Template:
 
     def render(self):
         if not self._update_check_started:
-            threading.Thread(target=self.state.aether_view.check_for_update, daemon=True).start()
-            self._update_check_started = True
+            if threading.Thread(target=check_for_update, daemon=True).start():
+                self.check_update_icon.name = ft.Icons.NOTIFICATIONS_OUTLINED
+                self.check_update_icon.tooltip = "Update Available"
+                self.check_update_icon.color = ft.Colors.ORANGE
+                self.check_update_icon.update()
+                self._update_check_started = True
 
         def on_nav_change(e):
             self.page.go(f"/{e.control.selected_index}")
