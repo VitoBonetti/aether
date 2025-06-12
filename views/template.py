@@ -1,13 +1,13 @@
 import flet as ft
 
-
 class Template:
     def __init__(self, page: ft.Page, state, content_view: ft.Control, selected_index: int):
         self.page = page
         self.state = state
         self.content_view = content_view
         self.selected_index = selected_index
-
+        self.check_update_icon = ft.Icon(name=ft.Icons.VERIFIED_OUTLINED, tooltip="Up to date", color=ft.Colors.GREEN, size=20)
+        state.check_update_icon = self.check_update_icon
         self.info_progress = ft.ProgressRing(
             color=ft.Colors.ORANGE,
             width=20,
@@ -62,7 +62,8 @@ class Template:
                     theme_style=ft.TextThemeStyle.TITLE_LARGE
                 ),
                 ft.Container(expand=True),
-                self.info_progress
+                self.info_progress,
+                self.check_update_icon
             ]
         )
 

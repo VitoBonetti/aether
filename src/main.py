@@ -1,5 +1,5 @@
 import flet as ft
-from src.state import State
+from state import State
 from views.template import Template
 from views.aether_view import AetherView
 from views.networks_view import NetworksView

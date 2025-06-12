@@ -6,6 +6,8 @@ from utils.extract_probes import extract_probes
 from utils.extract_handshakes import extract_handshakes, group_handshakes
 from helpers.network_stats import network_stats
 import sys
+import git
+import threading
 
 
 class StdoutToTextField:
@@ -41,7 +43,36 @@ class AetherView:
         self.state = state
         self.page = state.page
 
+    def check_for_update(self):
+        try:
+            repo = git.Repo(search_parent_directories=True)
+            origin = repo.remote('origin')
+            origin.fetch()
+
+            ahead = sum(1 for _ in repo.iter_commits("HEAD..origin/master"))
+
+            if ahead > 0:
+                dlg = ft.AlertDialog(
+                    title=ft.Text("🚀 Update available!"),
+                    content=ft.Text(f"There are new commits upstream.\nRun `git pull` to grab them."),
+                    actions=[ft.TextButton("OK", on_click=lambda e: self.close_update_dialog(e, dlg, self.page))]
+                )
+                self.page.dialog = dlg
+                dlg.open = True
+                self.state.check_update_icon.name = ft.Icons.NOTIFICATIONS
+                self.state.check_update_icon.tooltip = "Update Available"
+                self.state.check_update_icon.color = ft.Colors.ORANGE
+                self.state.check_update_icon.update()
+                self.page.update()
+        except Exception as e:
+            print("Update-check error:", e)
+
+    def close_update_dialog(self, e, dlg, page):
+        dlg.open = False
+        page.update()
+
     def render(self):
+        threading.Thread(target=self.check_for_update, daemon=True).start()
         aether_title = ft.Text("Home", theme_style=ft.TextThemeStyle.TITLE_LARGE, color=ft.Colors.BLACK87)
 
         file_picker = ft.FilePicker(on_result=lambda e: on_file_picker_result(e, self.page))
