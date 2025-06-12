@@ -4,6 +4,8 @@ from scapy.layers.dot11 import Dot11, Dot11Beacon, RadioTap
 from collections import defaultdict
 from datetime import datetime
 from pathlib import Path
+from helpers.resolve_mac import resolve_mac
+from mac_vendor_lookup import MacLookup
 
 
 def extract_networks(packets: PacketList, out_path: str):
@@ -12,6 +14,16 @@ def extract_networks(packets: PacketList, out_path: str):
     1. merged_networks.json: SSIDs mapped to latest AP info.
     2. extended_networks.json: same, but each AP entry includes a list of connected clients with stats.
     """
+    ml = MacLookup()
+    # Update database
+    print("try to update")
+    try:
+        ml.update_vendors()
+        print("updating")
+    except:
+        print("updating skip")
+        pass
+
     # --- Phase 1: Collect beacons for AP info ---
     networks = {}  # ssid -> bssid -> ap info
     for pkt in packets:
@@ -44,9 +56,9 @@ def extract_networks(packets: PacketList, out_path: str):
                 band = None
 
             last_seen = datetime.fromtimestamp(float(pkt.time)).strftime('%d-%m-%Y %H:%M:%S')
-
+            bssid_resolved = resolve_mac(bssid)
             entry = {
-                'bssid': bssid,
+                'bssid': bssid_resolved,
                 'channel': channel,
                 'signal': signal,
                 'frequency': frequency,
@@ -78,12 +90,13 @@ def extract_networks(packets: PacketList, out_path: str):
                 elif addr1 == bssid:
                     client_mac = addr2
                 if client_mac:
+                    mac_resolved = resolve_mac(client_mac)
                     # Capture last seen & signal
                     client_time = datetime.fromtimestamp(float(pkt.time)).strftime('%d-%m-%Y %H:%M:%S')
-                    client_entry = {'mac': client_mac, 'last_seen': client_time}
+                    client_entry = {'mac': mac_resolved, 'last_seen': client_time}
                     if pkt.haslayer(RadioTap) and hasattr(pkt[RadioTap], 'dBm_AntSignal'):
                         client_entry['signal'] = pkt[RadioTap].dBm_AntSignal
-                    clients_map[bssid][client_mac] = client_entry
+                    clients_map[bssid][mac_resolved] = client_entry
 
     # --- Phase 3: Write merged and extended JSON outputs ---
     # 1. merged_networks.json
