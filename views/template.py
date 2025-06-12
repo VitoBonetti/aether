@@ -1,5 +1,5 @@
 import flet as ft
-import threading
+import asyncio
 from helpers.check_update import check_for_update
 
 
@@ -23,34 +23,35 @@ class Template:
         )
         state.info_progress = self.info_progress
 
-        threading.Thread(target=self._check_and_apply_update, daemon=True).start()
+        page.run_task(self._async_check_for_update)
 
-    def _check_and_apply_update(self):
-        ahead = check_for_update()  # returns an int
+    async def _async_check_for_update(self):
+        # run your blocking check in a threadpool
+        ahead = await asyncio.to_thread(check_for_update)
         if ahead > 0:
-            # schedule the UI update on the main Flet thread
-            self.page.call_from_thread(self._on_update_available, ahead)
+            # mutate the icon and pop the dialog
+            self.check_update_icon.name = ft.Icons.NOTIFICATIONS_OUTLINED
+            self.check_update_icon.tooltip = "Update Available"
+            self.check_update_icon.color = ft.Colors.ORANGE
+            self.check_update_icon.update()
 
-    def _on_update_available(self, ahead: int):
-        # change the icon
-        self.check_update_icon.name = ft.Icons.NOTIFICATIONS_OUTLINED
-        self.check_update_icon.tooltip = "Update Available"
-        self.check_update_icon.color = ft.Colors.ORANGE
-        self.check_update_icon.update()
+            dlg = ft.AlertDialog(
+                title=ft.Text("🔔 Update available!"),
+                content=ft.Text(
+                    f"There are {ahead} new commits upstream.\n"
+                    "Run `git pull` to update."
+                ),
+                actions=[
+                    ft.TextButton("OK", on_click=lambda e: self._close_dialog(dlg))
+                ],
+            )
+            self.page.dialog = dlg
+            dlg.open = True
 
-        # optionally pop a dialog
-        dlg = ft.AlertDialog(
-            title=ft.Text("🔔 Update available!"),
-            content=ft.Text(f"There are {ahead} new commits upstream.\nRun `git pull`."),
-            actions=[ft.TextButton("OK", on_click=lambda e: self._close_dialog(dlg))],
-        )
-        self.page.dialog = dlg
-        dlg.open = True
+            # finally push the update back to the UI
+            self.page.update()
 
-        # finally refresh the page
-        self.page.update()
-
-    def _close_dialog(self, dlg):
+    def _close_dialog(self, dlg: ft.AlertDialog):
         dlg.open = False
         self.page.update()
 
