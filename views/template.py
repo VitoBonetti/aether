@@ -63,8 +63,8 @@ class Template:
             label_type=ft.NavigationRailLabelType.NONE,
             destinations=[
                 ft.NavigationRailDestination(icon=ft.Icons.PATTERN_OUTLINED,
-                                             selected_icon=ft.Icon(name=ft.Icons.PATTERN_OUTLINED, tooltip="Home", color=ft.Colors.BLUE),
-                                             label="Aether"),
+                                             selected_icon=ft.Icon(name=ft.Icons.PATTERN_OUTLINED, tooltip="Home",
+                                                                   color=ft.Colors.BLUE), label="Aether"),
                 ft.NavigationRailDestination(icon=ft.Icons.WIFI_OUTLINED,
                                              selected_icon=ft.Icon(name=ft.Icons.WIFI_OUTLINED, tooltip="Networks", color=ft.Colors.BLUE),
                                              label="Network Groups"),
