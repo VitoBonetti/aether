@@ -20,7 +20,7 @@ def main(page: ft.Page):
     state.page = page
     page.state = state
 
-    networks_file = Path(f'{page.state.data_analysis_dir}/merged_networks.json')
+    networks_file = Path(f'{page.state.data_analysis_dir}/extended_networks.json')
     networks_stats_file = Path(f'{page.state.data_analysis_dir}/network_stats.json')
 
     # one inner‐view instance per route
